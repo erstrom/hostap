@@ -4468,6 +4468,12 @@ static int hostapd_config_fill(struct hostapd_config *conf,
 			return 1;
 		}
 #endif /* CONFIG_AIRTIME_POLICY */
+#ifdef CONFIG_FORCE_PERIODIC_DISASSOC
+	} else if (os_strcmp(buf, "force_periodic_disassoc") == 0) {
+		bss->force_periodic_disassoc = atoi(pos);
+	} else if (os_strcmp(buf, "periodic_disassoc_interval") == 0) {
+		bss->periodic_disassoc_interval = atoi(pos);
+#endif /* CONFIG_FORCE_PERIODIC_DISASSOC */
 	} else {
 		wpa_printf(MSG_ERROR,
 			   "Line %d: unknown configuration item '%s'",

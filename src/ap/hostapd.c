@@ -3047,6 +3047,20 @@ void hostapd_new_assoc_sta(struct hostapd_data *hapd, struct sta_info *sta,
 		eloop_register_timeout(hapd->conf->ap_max_inactivity, 0,
 				       ap_handle_timer, hapd, sta);
 	}
+
+#ifdef CONFIG_FORCE_PERIODIC_DISASSOC
+	if (hapd->conf->force_periodic_disassoc) {
+		wpa_printf(MSG_DEBUG,
+			   "%s: %s: reschedule ap_handle_timer_force_disassoc timeout for "
+			   MACSTR " (%d seconds - periodic_disassoc_interval)",
+			   hapd->conf->iface, __func__, MAC2STR(sta->addr),
+			   hapd->conf->periodic_disassoc_interval);
+		eloop_cancel_timeout(ap_handle_timer_force_disassoc, hapd, sta);
+		eloop_register_timeout(hapd->conf->periodic_disassoc_interval, 0,
+				       ap_handle_timer_force_disassoc, hapd, sta);
+
+	}
+#endif /*CONFIG_FORCE_PERIODIC_DISASSOC*/
 }
 
 

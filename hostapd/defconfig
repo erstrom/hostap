@@ -382,3 +382,8 @@ CONFIG_IPV6=y
 # Override default value for the wpa_disable_eapol_key_retries configuration
 # parameter. See that parameter in hostapd.conf for more details.
 #CFLAGS += -DDEFAULT_WPA_DISABLE_EAPOL_KEY_RETRIES=1
+
+# Forced disassociation of stations support
+# Add support for forced periodic disassociations of all connected stations.
+# This option can be used for debugging issues related to disassociations.
+CONFIG_FORCE_PERIODIC_DISASSOC=y

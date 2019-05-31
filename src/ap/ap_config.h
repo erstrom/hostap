@@ -731,6 +731,11 @@ struct hostapd_bss_config {
 	int airtime_limit;
 	struct airtime_sta_weight *airtime_weight_list;
 #endif /* CONFIG_AIRTIME_POLICY */
+
+#ifdef CONFIG_FORCE_PERIODIC_DISASSOC
+	int force_periodic_disassoc;
+	int periodic_disassoc_interval;
+#endif /*CONFIG_FORCE_PERIODIC_DISASSOC*/
 };
 
 /**

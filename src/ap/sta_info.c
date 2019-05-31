@@ -264,6 +264,9 @@ void ap_free_sta(struct hostapd_data *hapd, struct sta_info *sta)
 	wpa_printf(MSG_DEBUG, "%s: cancel ap_handle_timer for " MACSTR,
 		   __func__, MAC2STR(sta->addr));
 	eloop_cancel_timeout(ap_handle_timer, hapd, sta);
+#ifdef CONFIG_FORCE_PERIODIC_DISASSOC
+	eloop_cancel_timeout(ap_handle_timer_force_disassoc, hapd, sta);
+#endif /*CONFIG_FORCE_PERIODIC_DISASSOC*/
 	eloop_cancel_timeout(ap_handle_session_timer, hapd, sta);
 	eloop_cancel_timeout(ap_handle_session_warning_timer, hapd, sta);
 	ap_sta_clear_disconnect_timeouts(hapd, sta);
@@ -582,6 +585,47 @@ skip_poll:
 	}
 }
 
+#ifdef CONFIG_FORCE_PERIODIC_DISASSOC
+void ap_handle_timer_force_disassoc(void *eloop_ctx, void *timeout_ctx)
+{
+	struct hostapd_data *hapd = eloop_ctx;
+	struct sta_info *sta = timeout_ctx;
+	unsigned long next_time = hapd->conf->periodic_disassoc_interval;
+	int reason = WLAN_REASON_DISASSOC_DUE_TO_INACTIVITY;
+
+	wpa_printf(MSG_DEBUG, "%s: %s: " MACSTR " flags=0x%x timeout_next=%d",
+		   hapd->conf->iface, __func__, MAC2STR(sta->addr), sta->flags,
+		   sta->timeout_next);
+	if (sta->timeout_next == STA_REMOVE) {
+		hostapd_logger(hapd, sta->addr, HOSTAPD_MODULE_IEEE80211,
+			       HOSTAPD_LEVEL_INFO, "deauthenticated due to "
+			       "local deauth request");
+		ap_free_sta(hapd, sta);
+		return;
+	}
+
+	sta->timeout_next = STA_DISASSOC;
+	hostapd_drv_sta_disassoc(hapd, sta->addr, reason);
+
+	ap_sta_set_authorized(hapd, sta, 0);
+	sta->flags &= ~WLAN_STA_ASSOC;
+	ieee802_1x_notify_port_enabled(sta->eapol_sm, 0);
+	if (!sta->acct_terminate_cause)
+		sta->acct_terminate_cause =
+			RADIUS_ACCT_TERMINATE_CAUSE_IDLE_TIMEOUT;
+	accounting_sta_stop(hapd, sta);
+	ieee802_1x_free_station(hapd, sta);
+	hostapd_logger(hapd, sta->addr, HOSTAPD_MODULE_IEEE80211,
+		       HOSTAPD_LEVEL_INFO, "disassociated due to "
+		       "inactivity");
+	wpa_printf(MSG_DEBUG, "%s: register ap_handle_timer_force_disassoc "
+		   "for " MACSTR " (%ld seconds - periodic_disassoc_interval)",
+		   __func__, MAC2STR(sta->addr), next_time);
+	eloop_register_timeout(next_time, 0, ap_handle_timer,
+			       hapd, sta);
+	mlme_disassociate_indication(hapd, sta, reason);
+}
+#endif /*CONFIG_FORCE_PERIODIC_DISASSOC*/
 
 static void ap_handle_session_timer(void *eloop_ctx, void *timeout_ctx)
 {

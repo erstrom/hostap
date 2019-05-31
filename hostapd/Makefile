@@ -1250,6 +1250,10 @@ OBJS += ../src/fst/fst_ctrl_iface.o
 endif
 endif
 
+ifdef CONFIG_FORCE_PERIODIC_DISASSOC
+CFLAGS += -DCONFIG_FORCE_PERIODIC_DISASSOC
+endif
+
 ALL=hostapd hostapd_cli
 
 all: verify_config $(ALL)

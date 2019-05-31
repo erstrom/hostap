@@ -141,6 +141,11 @@ void hostapd_config_defaults_bss(struct hostapd_bss_config *bss)
 
 	/* Default to strict CRL checking. */
 	bss->check_crl_strict = 1;
+
+#ifdef CONFIG_FORCE_PERIODIC_DISASSOC
+	bss->force_periodic_disassoc = 0;
+	bss->periodic_disassoc_interval = 20;
+#endif /*CONFIG_FORCE_PERIODIC_DISASSOC*/
 }
 
 
